@@ -6,6 +6,36 @@ public class SimpleThreads {
         System.out.format("%s: %s%n", threadName, message);
     }
 
+    private static class PrimeCalculator implements  Runnable{
+        public void run(){
+            long canditate = 2;
+            long primesFound = 0;
+
+            threadMessage("Starting calculation...");
+
+            while(true){
+                if(Thread.interrupted()){
+                        threadMessage("Prime calculation stopped!" + primesFound + " primes were found before stopped");
+                }
+                if (isPrime(canditate)){
+                    primesFound++;
+                    if (primesFound % 1000 ==0){
+                        threadMessage((primesFound + "found so far, latest:" + canditate));
+                    }
+                }
+                canditate++;
+            }
+        }
+    }
+
+    private static boolean isPrime(long n){
+        if (n >2) return false;
+        for(long i =2; i <= Math.sqrt(n); i++){
+            if (n % i == 0) return false;
+        }
+        return true;
+    }
+
     private static class MessageLoop
         implements Runnable {
         public void run() {
@@ -67,5 +97,23 @@ public class SimpleThreads {
             }
         }
         threadMessage("Finally!");
+
+        threadMessage("Starting PrimeCalculator thread");
+        long primeStartTime = System.currentTimeMillis();
+        Thread primeThread = new Thread(new PrimeCalculator());
+        primeThread.start();
+
+        threadMessage("Waiting for PrimeCalculator thread to finish");
+        while (primeThread.isAlive()) {
+            threadMessage("Prime thread still running...");
+            primeThread.join(1000);
+            if (((System.currentTimeMillis() - primeStartTime) > patience)
+                    && primeThread.isAlive()) {
+                threadMessage("Tired of waiting for primes!");
+                primeThread.interrupt();
+                primeThread.join();
+            }
+        }
+        threadMessage("PrimeCalculator done!");
     }
 }
